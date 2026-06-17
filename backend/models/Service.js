@@ -34,10 +34,12 @@ const serviceSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: true,
+    min: 0,
   },
   deliveryTime: {
     type: Number,
     required: true,
+    min: 1,
   },
   images: [String],
   status: {

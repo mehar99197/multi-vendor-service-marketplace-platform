@@ -37,6 +37,9 @@ const reviewSchema = new mongoose.Schema({
   },
 });
 
+// One review per (request, customer) — enforced at the DB layer to survive races.
+reviewSchema.index({ request: 1, customer: 1 }, { unique: true });
+
 const Review = mongoose.model('Review', reviewSchema);
 
 export default Review;

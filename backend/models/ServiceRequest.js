@@ -23,6 +23,7 @@ const serviceRequestSchema = new mongoose.Schema({
   budget: {
     type: Number,
     required: true,
+    min: 0,
   },
   deadline: {
     type: Date,

@@ -34,8 +34,8 @@ export default function Register() {
       setError('Passwords do not match.');
       return;
     }
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
 
@@ -93,7 +93,7 @@ export default function Register() {
               value={form.password}
               onChange={handleChange}
               className="mt-1.5 w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-white placeholder-gray-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              placeholder="Min. 6 characters"
+              placeholder="Min. 8 characters"
             />
           </div>
           <div>

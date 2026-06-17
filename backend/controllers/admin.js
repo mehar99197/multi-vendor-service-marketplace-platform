@@ -19,7 +19,8 @@ const getUsers = async (req, res) => {
       total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -32,7 +33,8 @@ const getUserStats = async (req, res) => {
 
     res.json({ totalUsers, customers, providers, admins });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -49,7 +51,8 @@ const getServiceStats = async (req, res) => {
 
     res.json({ totalServices, activeServices, inactiveServices, categories });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -63,7 +66,8 @@ const getRequestStats = async (req, res) => {
 
     res.json({ totalRequests, pending, accepted, rejected, completed });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -78,7 +82,8 @@ const getProjectStats = async (req, res) => {
 
     res.json({ totalProjects, pending, accepted, inProgress, completed, delivered });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -134,7 +139,8 @@ const getDashboardStats = async (req, res) => {
       recentRequests,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 

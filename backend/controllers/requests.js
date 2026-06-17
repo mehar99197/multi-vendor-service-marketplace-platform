@@ -6,9 +6,26 @@ const createRequest = async (req, res) => {
   try {
     const { service: serviceId, requirements, budget, deadline } = req.body;
 
+    if (typeof requirements !== 'string' || !requirements.trim()) {
+      return res.status(400).json({ message: 'Requirements are required' });
+    }
+    if (typeof budget !== 'number' || !(budget > 0)) {
+      return res.status(400).json({ message: 'Budget must be a positive number' });
+    }
+    const deadlineDate = new Date(deadline);
+    if (isNaN(deadlineDate.getTime()) || deadlineDate.getTime() <= Date.now()) {
+      return res.status(400).json({ message: 'Deadline must be a valid future date' });
+    }
+
     const service = await Service.findById(serviceId);
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });
+    }
+    if (service.status !== 'active') {
+      return res.status(400).json({ message: 'This service is not available' });
+    }
+    if (service.provider.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: 'You cannot request your own service' });
     }
 
     const request = await ServiceRequest.create({
@@ -17,7 +34,7 @@ const createRequest = async (req, res) => {
       provider: service.provider,
       requirements,
       budget,
-      deadline,
+      deadline: deadlineDate,
     });
 
     await Project.create({
@@ -29,8 +46,20 @@ const createRequest = async (req, res) => {
 
     res.status(201).json(request);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('createRequest error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
+};
+
+const attachProjectIds = async (requests, ownerId) => {
+  const projects = await Project.find({
+    $or: [{ customer: ownerId }, { provider: ownerId }],
+  }).select('request status');
+  const projectMap = {};
+  projects.forEach((p) => {
+    projectMap[p.request.toString()] = p._id;
+  });
+  return requests.map((r) => ({ ...r.toObject(), projectId: projectMap[r._id.toString()] || null }));
 };
 
 const getMyRequests = async (req, res) => {
@@ -40,20 +69,10 @@ const getMyRequests = async (req, res) => {
       .populate('provider', 'name email avatar')
       .sort({ createdAt: -1 });
 
-    const projects = await Project.find({ customer: req.user._id }).select('request status');
-    const projectMap = {};
-    projects.forEach((p) => {
-      projectMap[p.request.toString()] = p._id;
-    });
-
-    const requestsWithProject = requests.map((r) => ({
-      ...r.toObject(),
-      projectId: projectMap[r._id.toString()] || null,
-    }));
-
-    res.json(requestsWithProject);
+    res.json(await attachProjectIds(requests, req.user._id));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getMyRequests error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -64,20 +83,10 @@ const getReceivedRequests = async (req, res) => {
       .populate('customer', 'name email avatar')
       .sort({ createdAt: -1 });
 
-    const projects = await Project.find({ provider: req.user._id }).select('request status');
-    const projectMap = {};
-    projects.forEach((p) => {
-      projectMap[p.request.toString()] = p._id;
-    });
-
-    const requestsWithProject = requests.map((r) => ({
-      ...r.toObject(),
-      projectId: projectMap[r._id.toString()] || null,
-    }));
-
-    res.json(requestsWithProject);
+    res.json(await attachProjectIds(requests, req.user._id));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getReceivedRequests error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -102,8 +111,17 @@ const getRequestById = async (req, res) => {
 
     res.json(request);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getRequestById error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
+};
+
+// Legal transitions for the request lifecycle (default-deny everything else).
+const REQUEST_TRANSITIONS = {
+  pending: ['accepted', 'rejected'],
+  accepted: ['completed'],
+  rejected: [],
+  completed: [],
 };
 
 const updateRequestStatus = async (req, res) => {
@@ -114,23 +132,30 @@ const updateRequestStatus = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
 
-    const { status } = req.body;
-
-    if (status === 'accepted' || status === 'rejected') {
-      if (request.provider.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'Only the provider can accept or reject requests' });
-      }
+    // Must be a party to the request (or admin).
+    const isCustomer = request.customer.toString() === req.user._id.toString();
+    const isProvider = request.provider.toString() === req.user._id.toString();
+    if (!isCustomer && !isProvider && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
     }
 
-    if (status === 'completed') {
-      if (request.customer.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'Only the customer can mark as completed' });
-      }
+    const { status } = req.body;
+    if (!REQUEST_TRANSITIONS[request.status] || !REQUEST_TRANSITIONS[request.status].includes(status)) {
+      return res.status(400).json({ message: `Cannot change status from ${request.status} to ${status}` });
+    }
+
+    // Role rules per transition.
+    if ((status === 'accepted' || status === 'rejected') && !isProvider) {
+      return res.status(403).json({ message: 'Only the provider can accept or reject requests' });
+    }
+    if (status === 'completed' && !isCustomer) {
+      return res.status(403).json({ message: 'Only the customer can mark as completed' });
     }
 
     request.status = status;
     const updated = await request.save();
 
+    // Keep the linked project in step.
     const project = await Project.findOne({ request: request._id });
     if (project) {
       if (status === 'accepted') {
@@ -144,7 +169,8 @@ const updateRequestStatus = async (req, res) => {
 
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('updateRequestStatus error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 

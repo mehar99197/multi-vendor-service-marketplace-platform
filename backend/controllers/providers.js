@@ -1,5 +1,4 @@
 import ServiceProvider from '../models/ServiceProvider.js';
-import User from '../models/User.js';
 import Service from '../models/Service.js';
 import ServiceRequest from '../models/ServiceRequest.js';
 import Project from '../models/Project.js';
@@ -10,30 +9,27 @@ const getAllProviders = async (req, res) => {
     const { search, skill } = req.query;
     let query = {};
 
-    if (skill) {
+    if (typeof skill === 'string' && skill) {
       query.skills = { $in: [skill] };
     }
 
-    let providers = await ServiceProvider.find(query).populate('user', 'name email avatar');
+    let providers = await ServiceProvider.find(query).populate('user', 'name avatar');
 
-    if (search) {
-      providers = providers.filter((p) =>
-        p.user && p.user.name.toLowerCase().includes(search.toLowerCase())
-      );
+    if (typeof search === 'string' && search) {
+      const term = search.toLowerCase();
+      providers = providers.filter((p) => p.user && p.user.name.toLowerCase().includes(term));
     }
 
     res.json(providers);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getAllProviders error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
 const getProviderById = async (req, res) => {
   try {
-    const provider = await ServiceProvider.findOne({ user: req.params.id }).populate(
-      'user',
-      'name email avatar'
-    );
+    const provider = await ServiceProvider.findOne({ user: req.params.id }).populate('user', 'name avatar');
 
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
@@ -43,7 +39,8 @@ const getProviderById = async (req, res) => {
 
     res.json({ provider, services });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getProviderById error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -57,15 +54,18 @@ const updateProviderProfile = async (req, res) => {
 
     const { bio, skills, experience, pricing } = req.body;
 
-    if (bio !== undefined) provider.bio = bio;
-    if (skills !== undefined) provider.skills = skills;
-    if (experience !== undefined) provider.experience = experience;
-    if (pricing !== undefined) provider.pricing = pricing;
+    if (bio !== undefined) provider.bio = typeof bio === 'string' ? bio : provider.bio;
+    if (skills !== undefined && Array.isArray(skills)) {
+      provider.skills = skills.filter((s) => typeof s === 'string');
+    }
+    if (experience !== undefined && Array.isArray(experience)) provider.experience = experience;
+    if (pricing !== undefined && typeof pricing === 'object') provider.pricing = pricing;
 
     const updated = await provider.save();
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('updateProviderProfile error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -83,7 +83,8 @@ const addPortfolioItem = async (req, res) => {
     const updated = await provider.save();
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('addPortfolioItem error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -99,7 +100,8 @@ const deletePortfolioItem = async (req, res) => {
     const updated = await provider.save();
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('deletePortfolioItem error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -131,9 +133,7 @@ const getProviderStats = async (req, res) => {
     const reviews = await Review.find({ provider: providerId });
     const reviewsCount = reviews.length;
     const averageRating =
-      reviewsCount > 0
-        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount
-        : 0;
+      reviewsCount > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount : 0;
 
     res.json({
       totalProjects,
@@ -145,7 +145,8 @@ const getProviderStats = async (req, res) => {
       averageRating,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getProviderStats error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 

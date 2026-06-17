@@ -15,7 +15,8 @@ const getMyProjects = async (req, res) => {
 
     res.json(projects);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -42,7 +43,8 @@ const getProjectById = async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -106,7 +108,8 @@ const updateProjectStatus = async (req, res) => {
 
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -125,9 +128,16 @@ const addProjectUpdate = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    if (project.status === 'delivered') {
+      return res.status(400).json({ message: 'This project is delivered and can no longer be updated' });
+    }
+
     const { text } = req.body;
-    if (!text) {
+    if (typeof text !== 'string' || !text.trim()) {
       return res.status(400).json({ message: 'Update text is required' });
+    }
+    if (text.length > 2000) {
+      return res.status(400).json({ message: 'Update text is too long (max 2000 characters)' });
     }
 
     project.updates.push({
@@ -141,7 +151,8 @@ const addProjectUpdate = async (req, res) => {
 
     res.json(populated);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
