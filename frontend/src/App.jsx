@@ -55,12 +55,12 @@ export default function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/services/:id" element={<ServiceDetail />} />
             <Route path="/services/create" element={
-              <ProtectedRoute roles={['provider', 'admin']}>
+              <ProtectedRoute roles={['provider']}>
                 <CreateService />
               </ProtectedRoute>
             } />
             <Route path="/services/edit/:id" element={
-              <ProtectedRoute roles={['provider', 'admin']}>
+              <ProtectedRoute roles={['provider']}>
                 <EditService />
               </ProtectedRoute>
             } />
