@@ -53,6 +53,14 @@ const serviceSchema = new mongoose.Schema({
   },
 });
 
+// Browse: active services newest-first (default sort) serves the no-category case;
+// the 3-field index serves category-filtered browse. Both keep the createdAt sort
+// index-served instead of a blocking in-memory sort.
+serviceSchema.index({ status: 1, createdAt: -1 });
+serviceSchema.index({ status: 1, category: 1, createdAt: -1 });
+// A provider's own service list (getMyServices), newest-first.
+serviceSchema.index({ provider: 1, createdAt: -1 });
+
 const Service = mongoose.model('Service', serviceSchema);
 
 export default Service;

@@ -45,6 +45,13 @@ const projectSchema = new mongoose.Schema({
   },
 });
 
+// Dashboard list: a user's projects as customer OR provider, newest-first. The $or
+// query uses these two indexes via index union; each keeps the createdAt sort served.
+projectSchema.index({ customer: 1, createdAt: -1 });
+projectSchema.index({ provider: 1, createdAt: -1 });
+// 1-to-1 request→project lookup used to keep the two lifecycles in step.
+projectSchema.index({ request: 1 });
+
 const Project = mongoose.model('Project', projectSchema);
 
 export default Project;

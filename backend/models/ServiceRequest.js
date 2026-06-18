@@ -40,6 +40,11 @@ const serviceRequestSchema = new mongoose.Schema({
   },
 });
 
+// Inbox queries: a customer's sent requests / a provider's received requests,
+// each newest-first — index-served filter + sort.
+serviceRequestSchema.index({ customer: 1, createdAt: -1 });
+serviceRequestSchema.index({ provider: 1, createdAt: -1 });
+
 const ServiceRequest = mongoose.model('ServiceRequest', serviceRequestSchema);
 
 export default ServiceRequest;

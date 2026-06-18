@@ -35,13 +35,17 @@ const getAllServices = async (req, res) => {
     const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 12)); // cap page size
     const skip = (pageNum - 1) * limitNum;
 
-    const total = await Service.countDocuments(query);
-    const services = await Service.find(query)
-      .populate('provider', 'name avatar')
-      .sort(sortOption)
-      .skip(skip)
-      .limit(limitNum)
-      .lean();
+    // Independent queries — count the total and fetch the page concurrently
+    // instead of two sequential awaits.
+    const [total, services] = await Promise.all([
+      Service.countDocuments(query),
+      Service.find(query)
+        .populate('provider', 'name avatar')
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+    ]);
 
     // The provider's aggregate rating lives on the ServiceProvider profile (keyed by
     // user id), not on the User the service references — join it in so cards show stars.
