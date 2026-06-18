@@ -1,6 +1,7 @@
 import ServiceRequest from '../models/ServiceRequest.js';
 import Service from '../models/Service.js';
 import Project from '../models/Project.js';
+import { createNotification } from '../utils/notify.js';
 
 const createRequest = async (req, res) => {
   try {
@@ -42,6 +43,15 @@ const createRequest = async (req, res) => {
       customer: req.user._id,
       provider: service.provider,
       service: serviceId,
+    });
+
+    // Alert the provider that a new request is waiting on them.
+    await createNotification({
+      user: service.provider,
+      type: 'request',
+      title: 'New service request',
+      body: `${req.user.name} requested "${service.title}".`,
+      link: '/received-requests',
     });
 
     res.status(201).json(request);
@@ -116,10 +126,13 @@ const getRequestById = async (req, res) => {
   }
 };
 
-// Legal transitions for the request lifecycle (default-deny everything else).
+// Legal transitions a participant may drive directly on the request (default-deny
+// everything else). The provider accepts/rejects a pending request; nobody completes
+// a request directly — completion is owned by the project lifecycle (the customer
+// confirming delivery), so it is NOT a legal direct transition here.
 const REQUEST_TRANSITIONS = {
   pending: ['accepted', 'rejected'],
-  accepted: ['completed'],
+  accepted: [],
   rejected: [],
   completed: [],
 };
@@ -144,27 +157,39 @@ const updateRequestStatus = async (req, res) => {
       return res.status(400).json({ message: `Cannot change status from ${request.status} to ${status}` });
     }
 
-    // Role rules per transition.
+    // Role rules per transition. Only the provider can accept or reject a request.
     if ((status === 'accepted' || status === 'rejected') && !isProvider) {
       return res.status(403).json({ message: 'Only the provider can accept or reject requests' });
-    }
-    if (status === 'completed' && !isCustomer) {
-      return res.status(403).json({ message: 'Only the customer can mark as completed' });
     }
 
     request.status = status;
     const updated = await request.save();
 
-    // Keep the linked project in step.
+    // Keep the linked project in step. Acceptance opens the project workflow;
+    // rejection cancels it so it cannot be advanced or "un-rejected" later.
     const project = await Project.findOne({ request: request._id });
     if (project) {
       if (status === 'accepted') {
         project.status = 'accepted';
         await project.save();
-      } else if (status === 'completed') {
-        project.status = 'completed';
+      } else if (status === 'rejected') {
+        project.status = 'cancelled';
         await project.save();
       }
+    }
+
+    // Let the customer know the provider's decision.
+    if (status === 'accepted' || status === 'rejected') {
+      await createNotification({
+        user: request.customer,
+        type: 'status',
+        title: status === 'accepted' ? 'Request accepted' : 'Request declined',
+        body:
+          status === 'accepted'
+            ? `${req.user.name} accepted your request. Work can begin.`
+            : `${req.user.name} declined your request.`,
+        link: status === 'accepted' && project ? `/projects/${project._id}` : '/my-requests',
+      });
     }
 
     res.json(updated);

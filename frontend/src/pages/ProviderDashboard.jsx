@@ -1,7 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import api from '../api/axios';
+import { getMyServices, deleteService } from '../api/services';
+import TasksWidget from '../components/project/TasksWidget';
 
 function StatCard({ title, value, icon, color = 'blue' }) {
   const colorMap = {
@@ -29,13 +31,14 @@ export default function ProviderDashboard() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [stats, setStats] = useState({
-    totalEarnings: 0,
+    earningsTotal: 0,
     activeProjects: 0,
     pendingRequests: 0,
     averageRating: 0,
   });
   const [requests, setRequests] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [myServices, setMyServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
@@ -48,20 +51,32 @@ export default function ProviderDashboard() {
     setLoading(true);
     setError('');
     try {
-      const [statsRes, reqRes, projRes] = await Promise.all([
+      const [statsRes, reqRes, projRes, services] = await Promise.all([
         api.get('/providers/stats'),
         api.get('/requests'),
         api.get('/projects'),
+        getMyServices(),
       ]);
       setStats(statsRes.data);
       const allRequests = Array.isArray(reqRes.data) ? reqRes.data : reqRes.data.requests || [];
       const allProjects = Array.isArray(projRes.data) ? projRes.data : projRes.data.projects || [];
       setRequests(allRequests);
       setProjects(allProjects.filter((p) => p.status === 'in-progress' || p.status === 'accepted'));
+      setMyServices(services);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteService = async (id) => {
+    if (!window.confirm('Delete this service? This cannot be undone.')) return;
+    try {
+      await deleteService(id);
+      setMyServices((prev) => prev.filter((s) => s._id !== id));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete service');
     }
   };
 
@@ -92,11 +107,19 @@ export default function ProviderDashboard() {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">
-            Welcome back, {user?.name || 'Provider'}
-          </h1>
-          <p className="text-gray-400 mt-1">Manage your services, projects, and earnings</p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">
+              Welcome back, {user?.name || 'Provider'}
+            </h1>
+            <p className="text-gray-400 mt-1">Manage your services, projects, and earnings</p>
+          </div>
+          <Link
+            to="/services/create"
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+          >
+            + Create Service
+          </Link>
         </div>
 
         {error && (
@@ -108,7 +131,7 @@ export default function ProviderDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Total Earnings"
-            value={`$${(stats.totalEarnings || 0).toLocaleString()}`}
+            value={`$${(stats.earningsTotal || 0).toLocaleString()}`}
             color="green"
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,10 +177,84 @@ export default function ProviderDashboard() {
           </div>
           <div className="p-6">
             <div className="text-4xl font-bold text-green-400">
-              ${(stats.totalEarnings || 0).toLocaleString()}
+              ${(stats.earningsTotal || 0).toLocaleString()}
             </div>
             <p className="text-gray-400 mt-1">Total lifetime earnings</p>
           </div>
+        </div>
+
+        <TasksWidget />
+
+        <div className="bg-gray-800 rounded-xl border border-gray-700 mb-8">
+          <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">My Services ({myServices.length})</h2>
+            <Link
+              to="/services/create"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              + Create Service
+            </Link>
+          </div>
+          {myServices.length === 0 ? (
+            <div className="p-6 text-center text-gray-400">
+              You haven't listed any services yet.{' '}
+              <Link to="/services/create" className="text-indigo-400 hover:text-indigo-300">
+                Create your first service
+              </Link>
+              .
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-700">
+              {myServices.map((svc) => (
+                <div
+                  key={svc._id}
+                  className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-medium text-white truncate">{svc.title}</h3>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                          svc.status === 'active'
+                            ? 'bg-green-500/20 text-green-400 border-green-500/50'
+                            : 'bg-gray-500/20 text-gray-400 border-gray-500/50'
+                        }`}
+                      >
+                        {svc.status}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-400">
+                      <span className="text-blue-400">{svc.category}</span>
+                      <span className="mx-2">·</span>
+                      <span className="text-green-400">${svc.price}</span>
+                      <span className="mx-2">·</span>
+                      <span>{svc.deliveryTime} days</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Link
+                      to={`/services/${svc._id}`}
+                      className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs font-medium transition-colors"
+                    >
+                      View
+                    </Link>
+                    <Link
+                      to={`/services/edit/${svc._id}`}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteService(svc._id)}
+                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {pendingRequests.length > 0 && (

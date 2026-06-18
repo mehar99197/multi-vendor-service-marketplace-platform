@@ -1,6 +1,7 @@
 import Review from '../models/Review.js';
 import ServiceRequest from '../models/ServiceRequest.js';
 import ServiceProvider from '../models/ServiceProvider.js';
+import { createNotification } from '../utils/notify.js';
 
 const createReview = async (req, res) => {
   try {
@@ -56,6 +57,15 @@ const createReview = async (req, res) => {
       { user: provider },
       { rating: averageRating, numReviews: allReviews.length }
     );
+
+    // Let the provider know they were reviewed.
+    await createNotification({
+      user: provider,
+      type: 'review',
+      title: 'New review received',
+      body: `${req.user.name} left you a ${numericRating}-star review.`,
+      link: '/dashboard/provider',
+    });
 
     res.status(201).json(review);
   } catch (error) {

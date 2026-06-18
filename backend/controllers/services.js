@@ -1,4 +1,5 @@
 import Service from '../models/Service.js';
+import ServiceProvider from '../models/ServiceProvider.js';
 
 const CATEGORIES = Service.schema.path('category').enumValues;
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -39,7 +40,30 @@ const getAllServices = async (req, res) => {
       .populate('provider', 'name avatar')
       .sort(sortOption)
       .skip(skip)
-      .limit(limitNum);
+      .limit(limitNum)
+      .lean();
+
+    // The provider's aggregate rating lives on the ServiceProvider profile (keyed by
+    // user id), not on the User the service references — join it in so cards show stars.
+    const providerIds = [
+      ...new Set(services.map((s) => s.provider?._id?.toString()).filter(Boolean)),
+    ];
+    const profiles = await ServiceProvider.find({ user: { $in: providerIds } }).select(
+      'user rating numReviews'
+    );
+    const ratingMap = {};
+    profiles.forEach((p) => {
+      ratingMap[p.user.toString()] = { rating: p.rating, numReviews: p.numReviews };
+    });
+    services.forEach((s) => {
+      const stats = (s.provider && ratingMap[s.provider._id.toString()]) || { rating: 0, numReviews: 0 };
+      if (s.provider) {
+        s.provider.rating = stats.rating;
+        s.provider.numReviews = stats.numReviews;
+      }
+      s.averageRating = stats.rating;
+      s.reviewCount = stats.numReviews;
+    });
 
     res.json({
       services,
@@ -55,11 +79,23 @@ const getAllServices = async (req, res) => {
 
 const getServiceById = async (req, res) => {
   try {
-    const service = await Service.findById(req.params.id).populate('provider', 'name avatar');
+    const service = await Service.findById(req.params.id).populate('provider', 'name avatar').lean();
 
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });
     }
+
+    // Merge the provider's profile aggregate (rating/numReviews/skills) into the response.
+    const profile = service.provider
+      ? await ServiceProvider.findOne({ user: service.provider._id }).select('rating numReviews skills')
+      : null;
+    if (service.provider) {
+      service.provider.rating = profile?.rating || 0;
+      service.provider.numReviews = profile?.numReviews || 0;
+      service.provider.skills = profile?.skills || [];
+    }
+    service.averageRating = profile?.rating || 0;
+    service.reviewCount = profile?.numReviews || 0;
 
     res.json(service);
   } catch (error) {

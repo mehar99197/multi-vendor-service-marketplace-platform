@@ -24,7 +24,10 @@ export default function ServiceDetail() {
           const providerId = svc.provider._id || svc.provider.id;
           try {
             const revRes = await api.get(`/reviews/provider/${providerId}`);
-            setReviews(revRes.data.reviews || revRes.data.data || []);
+            // The endpoint returns a bare array; tolerate a wrapped shape too.
+            setReviews(
+              Array.isArray(revRes.data) ? revRes.data : revRes.data.reviews || revRes.data.data || []
+            );
           } catch {
             setReviews([]);
           }
@@ -132,7 +135,7 @@ export default function ServiceDetail() {
                   <div className="mt-1 flex items-center gap-1">
                     {renderStars(service.provider.rating || service.averageRating)}
                     <span className="ml-1 text-xs text-gray-500">
-                      ({service.reviewCount || 0} reviews)
+                      ({service.provider.numReviews ?? service.reviewCount ?? 0} reviews)
                     </span>
                   </div>
                   {service.provider.skills?.length > 0 && (
@@ -161,7 +164,7 @@ export default function ServiceDetail() {
             {isOwner && (
               <>
                 <Link
-                  to={`/services/${id}/edit`}
+                  to={`/services/edit/${id}`}
                   className="rounded-lg border border-gray-600 bg-gray-700 px-6 py-3 font-semibold text-white transition hover:bg-gray-600"
                 >
                   Edit

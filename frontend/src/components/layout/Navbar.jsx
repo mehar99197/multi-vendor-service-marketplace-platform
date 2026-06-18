@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import NotificationBell from './NotificationBell'
 
 export default function Navbar() {
   const { user, logout, loading } = useAuth()
@@ -43,6 +44,14 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                {user.role === 'provider' && (
+                  <Link
+                    to="/services/create"
+                    className="px-3 py-1.5 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    + Create Service
+                  </Link>
+                )}
                 <Link
                   to="/dashboard"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
@@ -55,6 +64,7 @@ export default function Navbar() {
                 >
                   Profile
                 </Link>
+                <NotificationBell />
                 <span className="text-sm text-gray-400">
                   {user.name}
                 </span>
@@ -68,11 +78,13 @@ export default function Navbar() {
             )}
           </div>
 
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-gray-400 hover:text-white focus:outline-none"
-            aria-label="Toggle menu"
-          >
+          <div className="md:hidden flex items-center gap-1">
+            <NotificationBell />
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="p-2 text-gray-400 hover:text-white focus:outline-none"
+              aria-label="Toggle menu"
+            >
             {mobileOpen ? (
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -82,7 +94,8 @@ export default function Navbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             )}
-          </button>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -122,6 +135,15 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                {user.role === 'provider' && (
+                  <Link
+                    to="/services/create"
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2 bg-indigo-600 text-white rounded-md"
+                  >
+                    + Create Service
+                  </Link>
+                )}
                 <Link
                   to="/dashboard"
                   onClick={() => setMobileOpen(false)}

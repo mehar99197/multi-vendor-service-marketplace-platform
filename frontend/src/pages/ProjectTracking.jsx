@@ -2,6 +2,10 @@ import { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import api from '../api/axios';
+import StarRating from '../components/common/StarRating';
+import MessageThread from '../components/project/MessageThread';
+import TaskPanel from '../components/project/TaskPanel';
+import ContactNotes from '../components/project/ContactNotes';
 
 const STEPS = [
   { key: 'pending', label: 'Pending', icon: '1' },
@@ -110,6 +114,11 @@ export default function ProjectTracking() {
   const [sendingUpdate, setSendingUpdate] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [myReview, setMyReview] = useState(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewFeedback, setReviewFeedback] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState('');
 
   const isProvider = user?.role === 'provider';
   const isCustomer = user?.role === 'customer';
@@ -126,10 +135,46 @@ export default function ProjectTracking() {
       const data = res.data.project || res.data;
       setProject(data);
       setUpdates(data.updates || []);
+
+      // Once delivered, a customer can review. Check whether they already have one
+      // so we show their existing review instead of the form (avoids a duplicate 400).
+      if (user?.role === 'customer' && data.status === 'delivered') {
+        const requestId = data.request?._id || data.request;
+        try {
+          const revRes = await api.get('/reviews/my');
+          const list = Array.isArray(revRes.data) ? revRes.data : revRes.data.reviews || [];
+          setMyReview(list.find((r) => String(r.request) === String(requestId)) || null);
+        } catch {
+          setMyReview(null);
+        }
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load project');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewRating) {
+      setReviewError('Please select a star rating.');
+      return;
+    }
+    setReviewSubmitting(true);
+    setReviewError('');
+    try {
+      const requestId = project.request?._id || project.request;
+      const { data } = await api.post('/reviews', {
+        request: requestId,
+        rating: reviewRating,
+        feedback: reviewFeedback,
+      });
+      setMyReview(data);
+    } catch (err) {
+      setReviewError(err.response?.data?.message || 'Failed to submit review.');
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
@@ -208,6 +253,15 @@ export default function ProjectTracking() {
 
   const nextStatus = getNextStatus();
   const nextLabel = getNextStatusLabel();
+
+  // Work out which side the viewer is, and who the "contact" (other party) is.
+  const currentId = user?._id;
+  const customerId = project.customer?._id || project.customer;
+  const providerId = project.provider?._id || project.provider;
+  const isCustomerParty = String(currentId) === String(customerId);
+  const isProviderParty = String(currentId) === String(providerId);
+  const isParty = isCustomerParty || isProviderParty;
+  const counterpart = isCustomerParty ? project.provider : isProviderParty ? project.customer : null;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -315,12 +369,69 @@ export default function ProjectTracking() {
                   </p>
                 )}
                 {project.status === 'delivered' && (
-                  <p className="text-sm text-green-400">This project has been delivered and completed.</p>
+                  <div className="space-y-4">
+                    <p className="text-sm text-green-400">This project has been delivered and completed.</p>
+                    {isCustomer &&
+                      (myReview ? (
+                        <div className="rounded-lg border border-gray-700 bg-gray-700/30 p-4">
+                          <p className="text-sm font-medium text-white">Your review</p>
+                          <div className="mt-1">
+                            <StarRating rating={myReview.rating} />
+                          </div>
+                          {myReview.feedback && (
+                            <p className="mt-2 text-sm text-gray-300">{myReview.feedback}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <form
+                          onSubmit={handleSubmitReview}
+                          className="rounded-lg border border-gray-700 bg-gray-700/30 p-4"
+                        >
+                          <p className="text-sm font-medium text-white">Leave a review</p>
+                          <p className="mt-1 text-xs text-gray-400">
+                            How was your experience with this provider?
+                          </p>
+                          <div className="mt-2">
+                            <StarRating rating={reviewRating} interactive onRate={setReviewRating} />
+                          </div>
+                          <textarea
+                            value={reviewFeedback}
+                            onChange={(e) => setReviewFeedback(e.target.value)}
+                            rows={3}
+                            placeholder="Share details about your experience (optional)..."
+                            className="mt-3 w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                          />
+                          {reviewError && <p className="mt-2 text-sm text-red-400">{reviewError}</p>}
+                          <button
+                            type="submit"
+                            disabled={reviewSubmitting || !reviewRating}
+                            className="mt-3 w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                          >
+                            {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+                          </button>
+                        </form>
+                      ))}
+                  </div>
                 )}
               </div>
             </div>
           )}
         </div>
+
+        {isParty && (
+          <div className="mb-8">
+            <MessageThread projectId={id} />
+          </div>
+        )}
+
+        {isParty && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <TaskPanel projectId={id} />
+            {counterpart && (
+              <ContactNotes subjectId={counterpart._id} subjectName={counterpart.name} />
+            )}
+          </div>
+        )}
 
         <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
           <h3 className="text-lg font-semibold mb-4">Updates & Activity Log</h3>

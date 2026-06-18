@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import api from '../api/axios';
+import TasksWidget from '../components/project/TasksWidget';
 
 const statusColors = {
   pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
@@ -112,6 +113,8 @@ export default function CustomerDashboard() {
             }
           />
         </div>
+
+        <TasksWidget />
 
         <div className="bg-gray-800 rounded-xl border border-gray-700 mb-8">
           <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">

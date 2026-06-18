@@ -14,6 +14,10 @@ import projectRoutes from './routes/projects.js';
 import reviewRoutes from './routes/reviews.js';
 import adminRoutes from './routes/admin.js';
 import uploadRoutes from './routes/upload.js';
+import messageRoutes from './routes/messages.js';
+import notificationRoutes from './routes/notifications.js';
+import taskRoutes from './routes/tasks.js';
+import noteRoutes from './routes/notes.js';
 
 // Fail fast on a missing/weak signing secret — HS256 is only as strong as the secret.
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
@@ -77,6 +81,10 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/notes', noteRoutes);
 
 // Centralised error handler — never leak internal error details to clients in production.
 app.use((err, req, res, next) => {

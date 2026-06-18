@@ -1,5 +1,6 @@
 import Project from '../models/Project.js';
 import ServiceRequest from '../models/ServiceRequest.js';
+import { createNotification } from '../utils/notify.js';
 
 const getMyProjects = async (req, res) => {
   try {
@@ -56,6 +57,13 @@ const updateProjectStatus = async (req, res) => {
       return res.status(404).json({ message: 'Project not found' });
     }
 
+    // A rejected request takes its project out of play — block any further movement
+    // (and prevent a stale 'pending' project from being used to "un-reject" a request).
+    const linkedRequest = await ServiceRequest.findById(project.request);
+    if (linkedRequest && linkedRequest.status === 'rejected') {
+      return res.status(400).json({ message: 'This request was rejected; the project cannot be advanced' });
+    }
+
     const { status } = req.body;
     const validStatuses = ['accepted', 'in-progress', 'completed', 'delivered'];
 
@@ -64,12 +72,14 @@ const updateProjectStatus = async (req, res) => {
     }
 
     // Linear workflow (Task req. 5): pending → accepted → in-progress → completed → delivered.
+    // 'cancelled' (set when the request is rejected) is terminal.
     const transitionFlow = {
       'pending': ['accepted'],
       'accepted': ['in-progress'],
       'in-progress': ['completed'],
       'completed': ['delivered'],
       'delivered': [],
+      'cancelled': [],
     };
 
     if (!transitionFlow[project.status] || !transitionFlow[project.status].includes(status)) {
@@ -106,6 +116,23 @@ const updateProjectStatus = async (req, res) => {
       }
     }
 
+    // Notify the other party that the project moved forward.
+    const otherParty =
+      project.customer.toString() === req.user._id.toString() ? project.provider : project.customer;
+    const statusLabels = {
+      accepted: 'accepted',
+      'in-progress': 'started',
+      completed: 'marked completed',
+      delivered: 'confirmed delivery of',
+    };
+    await createNotification({
+      user: otherParty,
+      type: 'status',
+      title: 'Project updated',
+      body: `${req.user.name} ${statusLabels[status] || 'updated'} your project.`,
+      link: `/projects/${project._id}`,
+    });
+
     res.json(updated);
   } catch (error) {
     console.error(error);
@@ -128,8 +155,8 @@ const addProjectUpdate = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    if (project.status === 'delivered') {
-      return res.status(400).json({ message: 'This project is delivered and can no longer be updated' });
+    if (project.status === 'delivered' || project.status === 'cancelled') {
+      return res.status(400).json({ message: 'This project is closed and can no longer be updated' });
     }
 
     const { text } = req.body;

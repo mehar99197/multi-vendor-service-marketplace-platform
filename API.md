@@ -81,6 +81,47 @@ Errors are returned as `{ "message": "..." }` with an appropriate status code.
 | GET | `/reviews/my` | any | – | `[ reviews ]` (as customer) |
 | POST | `/reviews` | customer | `{ provider, service, request, rating (1–5), feedback }` | created review (recomputes provider average) |
 
+## Messages — `/messages` (CRM: project chat)
+
+A project-scoped 1:1 conversation between its customer and provider.
+
+| Method | Path | Auth | Body | Response |
+|--------|------|------|------|----------|
+| GET | `/messages/project/:projectId` | party/admin | – | `[ messages ]` oldest→newest; also marks messages to the caller as read |
+| POST | `/messages` | party | `{ project, text }` | created message (notifies the other party) |
+
+## Notifications — `/notifications` (CRM: in-app alerts)
+
+Auto-generated on new requests, status changes, new messages, and new reviews.
+
+| Method | Path | Auth | Body | Response |
+|--------|------|------|------|----------|
+| GET | `/notifications?limit` | any | – | `{ notifications, unreadCount }` (newest first) |
+| PUT | `/notifications/:id/read` | owner | – | marked notification |
+| PUT | `/notifications/read-all` | any | – | `{ message }` |
+
+## Tasks — `/tasks` (CRM: follow-up reminders)
+
+Private to their creator; each task hangs off a project the creator is a party to.
+
+| Method | Path | Auth | Body | Response |
+|--------|------|------|------|----------|
+| GET | `/tasks?project=<id>` | any | – | `[ tasks ]` (own; open first, then by due date) |
+| POST | `/tasks` | party of project | `{ project, title, description?, dueDate? }` | created task |
+| PUT | `/tasks/:id` | owner | `{ title?, description?, dueDate?, completed? }` | updated task |
+| DELETE | `/tasks/:id` | owner | – | `{ message }` |
+
+## Notes — `/notes` (CRM: private contact notes & tags)
+
+Private notes a user keeps about a contact (the `subject`, another user). Only the author can read them.
+
+| Method | Path | Auth | Body / Query | Response |
+|--------|------|------|--------------|----------|
+| GET | `/notes?subject=<userId>` | any | `?subject` (required) | `[ notes ]` about that contact (newest first) |
+| POST | `/notes` | any | `{ subject, body?, tags? }` | created note |
+| PUT | `/notes/:id` | author | `{ body?, tags? }` | updated note |
+| DELETE | `/notes/:id` | author | – | `{ message }` |
+
 ## Admin — `/admin` (all require `admin`)
 
 | Method | Path | Response |

@@ -120,6 +120,17 @@ Set `VITE_API_URL` to point the frontend at a deployed backend (include the `/ap
 - **[DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)** — all six collections, fields, and relations
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** — deploying the API (Render) and the frontend (Vercel/Netlify)
 
+## CRM features
+
+Layered on top of the marketplace to manage the customer ↔ provider relationship:
+
+| Feature | What it does |
+|---------|--------------|
+| **In-app messaging** | Project-scoped 1:1 chat between customer and provider, on the project page (light polling, no WebSockets needed) |
+| **Notifications** | A navbar bell with unread count + dropdown; auto-generated on new requests, status changes, new messages, and new reviews |
+| **Follow-up tasks** | Private to-do reminders with due dates on a project; open/overdue tasks surface on the dashboard |
+| **Contact notes & tags** | Private CRM notes and tags you keep about the other party — only the author can ever see them |
+
 ## Bonus features implemented
 - **Dark mode** UI by default
 - **Activity log / project updates** timeline on each project
