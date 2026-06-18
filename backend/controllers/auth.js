@@ -110,9 +110,25 @@ const getMe = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, email, avatar } = req.body;
+    const { name, email, avatar, currentPassword } = req.body;
 
     const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Changing identity fields (name/email) requires confirming the current password.
+    // Avatar-only updates (e.g. the picture uploader) stay password-free.
+    const changingIdentity = name !== undefined || email !== undefined;
+    if (changingIdentity) {
+      if (typeof currentPassword !== 'string' || !currentPassword) {
+        return res.status(400).json({ message: 'Current password is required to change your name or email' });
+      }
+      const ok = await user.matchPassword(currentPassword);
+      if (!ok) {
+        return res.status(401).json({ message: 'Current password is incorrect' });
+      }
+    }
 
     if (name !== undefined) {
       if (typeof name !== 'string' || !name.trim()) {

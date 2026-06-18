@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
+import PasswordInput from '../components/common/PasswordInput';
 
 export default function Register() {
   const { register } = useContext(AuthContext);
@@ -87,23 +88,23 @@ export default function Register() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300">Password</label>
-            <input
-              type="password"
+            <PasswordInput
               name="password"
               value={form.password}
               onChange={handleChange}
-              className="mt-1.5 w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-white placeholder-gray-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              wrapperClassName="mt-1.5"
+              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-white placeholder-gray-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               placeholder="Min. 8 characters"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300">Confirm Password</label>
-            <input
-              type="password"
+            <PasswordInput
               name="confirmPassword"
               value={form.confirmPassword}
               onChange={handleChange}
-              className="mt-1.5 w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-white placeholder-gray-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              wrapperClassName="mt-1.5"
+              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-white placeholder-gray-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               placeholder="Repeat your password"
             />
           </div>

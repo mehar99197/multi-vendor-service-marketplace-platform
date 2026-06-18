@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 import api from '../api/axios';
 import { uploadImage } from '../api/upload';
+import PasswordInput from '../components/common/PasswordInput';
 
 function Input({ label, value, onChange, type = 'text', error, placeholder }) {
   return (
@@ -134,6 +135,7 @@ export default function Profile() {
   const { user, loadUser } = useContext(AuthContext);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [avatar, setAvatar] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [profileFormErrors, setProfileFormErrors] = useState({});
@@ -192,6 +194,7 @@ export default function Profile() {
     if (!name.trim()) errors.name = 'Name is required';
     if (!email.trim()) errors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) errors.email = 'Invalid email format';
+    if (!currentPassword) errors.currentPassword = 'Enter your current password to save changes';
     setProfileFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -222,7 +225,8 @@ export default function Profile() {
     setProfileMessage('');
     setProfileError('');
     try {
-      await api.put('/auth/profile', { name, email });
+      await api.put('/auth/profile', { name, email, currentPassword });
+      setCurrentPassword('');
       if (loadUser) await loadUser();
       setProfileMessage('Profile updated successfully');
     } catch (err) {
@@ -361,6 +365,23 @@ export default function Profile() {
               error={profileFormErrors.email}
               placeholder="your@email.com"
             />
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Current Password</label>
+              <PasswordInput
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Required to change your name or email"
+                className={`w-full px-4 py-2.5 bg-gray-700 border ${
+                  profileFormErrors.currentPassword ? 'border-red-500' : 'border-gray-600'
+                } rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+              />
+              {profileFormErrors.currentPassword && (
+                <p className="mt-1 text-sm text-red-400">{profileFormErrors.currentPassword}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                For your security, confirm your current password to update your name or email.
+              </p>
+            </div>
             <div className="flex justify-end">
               <button
                 type="submit"
