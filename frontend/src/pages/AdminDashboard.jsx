@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
+import { Reveal, Stagger, StaggerItem } from '../components/common/Motion';
+import Loading from '../components/common/Loading';
 
 function Badge({ label, color }) {
   const colorMap = {
-    blue: 'bg-blue-500/20 text-blue-400 border-blue-500/50',
-    green: 'bg-green-500/20 text-green-400 border-green-500/50',
-    yellow: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
-    red: 'bg-red-500/20 text-red-400 border-red-500/50',
-    purple: 'bg-purple-500/20 text-purple-400 border-purple-500/50',
-    indigo: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50',
-    gray: 'bg-gray-500/20 text-gray-400 border-gray-500/50',
+    blue: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+    green: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+    yellow: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40',
+    red: 'bg-red-500/20 text-red-300 border-red-500/40',
+    purple: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+    indigo: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+    gray: 'bg-gray-500/20 text-gray-300 border-gray-500/40',
   };
   const cls = colorMap[color] || colorMap.gray;
   return (
@@ -19,17 +21,14 @@ function Badge({ label, color }) {
   );
 }
 
-function StatCard({ title, value, color = 'blue' }) {
-  const textMap = {
-    blue: 'text-blue-400',
-    green: 'text-green-400',
-    yellow: 'text-yellow-400',
-    purple: 'text-purple-400',
-  };
+function StatCard({ title, value, gradient = 'from-indigo-500 to-blue-500' }) {
   return (
-    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+    <div className="glass rounded-2xl p-6 transition-transform hover:-translate-y-1">
+      <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${gradient}`}>
+        <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+      </div>
       <p className="text-sm text-gray-400">{title}</p>
-      <p className={`text-3xl font-bold ${textMap[color] || textMap.blue}`}>{value}</p>
+      <p className="text-3xl font-bold text-white">{value}</p>
     </div>
   );
 }
@@ -37,18 +36,18 @@ function StatCard({ title, value, color = 'blue' }) {
 function ProgressBar({ value, max = 100, color = 'blue' }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   const colorMap = {
-    blue: 'bg-blue-500',
-    green: 'bg-green-500',
-    yellow: 'bg-yellow-500',
-    red: 'bg-red-500',
-    purple: 'bg-purple-500',
-    indigo: 'bg-indigo-500',
+    blue: 'from-blue-500 to-indigo-500',
+    green: 'from-emerald-500 to-teal-500',
+    yellow: 'from-yellow-500 to-amber-500',
+    red: 'from-red-500 to-rose-500',
+    purple: 'from-purple-500 to-fuchsia-500',
+    indigo: 'from-indigo-500 to-fuchsia-500',
   };
   const barColor = colorMap[color] || colorMap.blue;
   return (
-    <div className="w-full bg-gray-700 rounded-full h-2.5">
+    <div className="w-full bg-white/10 rounded-full h-2.5">
       <div
-        className={`h-2.5 rounded-full ${barColor} transition-all duration-500`}
+        className={`h-2.5 rounded-full bg-gradient-to-r ${barColor} transition-all duration-700`}
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -108,8 +107,8 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading size="lg" text="Loading admin data…" />
       </div>
     );
   }
@@ -126,7 +125,7 @@ export default function AdminDashboard() {
     { status: 'pending', count: requestStats.pending || 0, color: 'yellow', text: 'text-yellow-400' },
     { status: 'accepted', count: requestStats.accepted || 0, color: 'blue', text: 'text-blue-400' },
     { status: 'rejected', count: requestStats.rejected || 0, color: 'red', text: 'text-red-400' },
-    { status: 'completed', count: requestStats.completed || 0, color: 'green', text: 'text-green-400' },
+    { status: 'completed', count: requestStats.completed || 0, color: 'green', text: 'text-emerald-400' },
   ];
   const maxReqStatusCount = Math.max(...statusEntries.map((s) => s.count), 1);
 
@@ -138,35 +137,35 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+    <div className="min-h-screen text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <Reveal className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tight">Admin <span className="text-gradient">Dashboard</span></h1>
           <p className="text-gray-400 mt-1">Platform overview and management</p>
-        </div>
+        </Reveal>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/40 rounded-xl text-red-400">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard title="Total Users" value={userCounts.total} color="blue" />
-          <StatCard title="Total Services" value={serviceCounts.total} color="green" />
-          <StatCard title="Total Requests" value={requestCounts.total} color="yellow" />
-          <StatCard title="Total Projects" value={projectCounts.total} color="purple" />
-        </div>
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StaggerItem><StatCard title="Total Users" value={userCounts.total} gradient="from-indigo-500 to-blue-500" /></StaggerItem>
+          <StaggerItem><StatCard title="Total Services" value={serviceCounts.total} gradient="from-emerald-500 to-teal-500" /></StaggerItem>
+          <StaggerItem><StatCard title="Total Requests" value={requestCounts.total} gradient="from-yellow-500 to-amber-500" /></StaggerItem>
+          <StaggerItem><StatCard title="Total Projects" value={projectCounts.total} gradient="from-fuchsia-500 to-purple-500" /></StaggerItem>
+        </Stagger>
 
-        <div className="flex gap-2 mb-6 border-b border-gray-700 pb-2 overflow-x-auto">
+        <div className="flex gap-2 mb-6 border-b border-white/10 pb-2 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  ? 'bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white glow-indigo'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {tab.label}
@@ -176,16 +175,16 @@ export default function AdminDashboard() {
 
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <div className="glass rounded-2xl p-6">
               <h3 className="text-lg font-semibold mb-4">Users by Role</h3>
               <div className="space-y-4">
                 <Bar label="Customers" value={userCounts.customers} max={maxRoleCount} color="blue" textColor="text-blue-400" />
-                <Bar label="Providers" value={userCounts.providers} max={maxRoleCount} color="green" textColor="text-green-400" />
+                <Bar label="Providers" value={userCounts.providers} max={maxRoleCount} color="green" textColor="text-emerald-400" />
                 <Bar label="Admins" value={userCounts.admins} max={maxRoleCount} color="purple" textColor="text-purple-400" />
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <div className="glass rounded-2xl p-6">
               <h3 className="text-lg font-semibold mb-4">Services by Category</h3>
               <div className="space-y-4">
                 {categories.length === 0 ? (
@@ -198,7 +197,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <div className="glass rounded-2xl p-6">
               <h3 className="text-lg font-semibold mb-4">Requests by Status</h3>
               <div className="space-y-4">
                 {statusEntries.map((s) => (
@@ -210,13 +209,13 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'users' && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-x-auto">
-            <div className="px-6 py-4 border-b border-gray-700">
+          <div className="glass rounded-2xl overflow-x-auto">
+            <div className="px-6 py-4 border-b border-white/10">
               <h2 className="text-xl font-semibold">All Users ({userCounts.total})</h2>
             </div>
             <table className="w-full">
               <thead>
-                <tr className="text-left text-gray-400 text-sm border-b border-gray-700">
+                <tr className="text-left text-gray-400 text-sm border-b border-white/10">
                   <th className="px-6 py-3 font-medium">Name</th>
                   <th className="px-6 py-3 font-medium">Email</th>
                   <th className="px-6 py-3 font-medium">Role</th>
@@ -225,7 +224,7 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u._id || u.id} className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors">
+                  <tr key={u._id || u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4 text-sm">{u.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-400">{u.email}</td>
                     <td className="px-6 py-4">
@@ -245,14 +244,14 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'services' && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+          <div className="glass rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-6">Services by Category</h2>
             {categories.length === 0 ? (
               <p className="text-gray-400 text-sm">No services yet</p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {categories.map((c) => (
-                  <div key={c.category} className="bg-gray-700/30 rounded-lg p-4 border border-gray-600">
+                  <div key={c.category} className="bg-white/5 rounded-xl p-4 border border-white/10">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-medium text-white">{c.category}</h3>
                       <span className="text-2xl font-bold text-indigo-400">{c.count}</span>
@@ -266,7 +265,7 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'requests' && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+          <div className="glass rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-6">Requests by Status</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {statusEntries.map((s) => {
@@ -274,10 +273,10 @@ export default function AdminDashboard() {
                   yellow: 'bg-yellow-500/10 border-yellow-500/30',
                   blue: 'bg-blue-500/10 border-blue-500/30',
                   red: 'bg-red-500/10 border-red-500/30',
-                  green: 'bg-green-500/10 border-green-500/30',
+                  green: 'bg-emerald-500/10 border-emerald-500/30',
                 };
                 return (
-                  <div key={s.status} className={`rounded-lg p-5 border ${bgMap[s.color]}`}>
+                  <div key={s.status} className={`rounded-xl p-5 border ${bgMap[s.color]}`}>
                     <p className={`text-3xl font-bold ${s.text}`}>{s.count}</p>
                     <p className="mt-1 text-gray-400 capitalize">{s.status}</p>
                   </div>

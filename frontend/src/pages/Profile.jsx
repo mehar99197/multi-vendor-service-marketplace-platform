@@ -3,6 +3,7 @@ import AuthContext from '../context/AuthContext';
 import api from '../api/axios';
 import { uploadImage } from '../api/upload';
 import PasswordInput from '../components/common/PasswordInput';
+import { Reveal } from '../components/common/Motion';
 
 function Input({ label, value, onChange, type = 'text', error, placeholder }) {
   return (
@@ -13,9 +14,9 @@ function Input({ label, value, onChange, type = 'text', error, placeholder }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full px-4 py-2.5 bg-gray-700 border ${
-          error ? 'border-red-500' : 'border-gray-600'
-        } rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+        className={`w-full px-4 py-2.5 bg-white/5 border ${
+          error ? 'border-red-500' : 'border-white/10'
+        } rounded-xl text-white placeholder-gray-500 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40`}
       />
       {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
     </div>
@@ -24,13 +25,13 @@ function Input({ label, value, onChange, type = 'text', error, placeholder }) {
 
 function ExperienceItem({ exp, index, onChange, onRemove }) {
   return (
-    <div className="p-4 bg-gray-700/50 rounded-lg border border-gray-600 space-y-3">
+    <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3">
       <div className="flex justify-between items-center">
         <h4 className="text-sm font-medium text-gray-300">Experience #{index + 1}</h4>
         <button
           type="button"
           onClick={() => onRemove(index)}
-          className="text-red-400 hover:text-red-300 text-sm"
+          className="text-red-400 hover:text-red-300 text-sm transition-colors"
         >
           Remove
         </button>
@@ -53,7 +54,7 @@ function ExperienceItem({ exp, index, onChange, onRemove }) {
           id={`current-${index}`}
           checked={exp.current || false}
           onChange={(e) => onChange(index, 'current', e.target.checked)}
-          className="rounded bg-gray-600 border-gray-500 text-blue-600 focus:ring-blue-500"
+          className="rounded bg-white/10 border-white/20 text-indigo-600 focus:ring-indigo-500"
         />
         <label htmlFor={`current-${index}`} className="text-sm text-gray-300">Current position</label>
       </div>
@@ -63,7 +64,7 @@ function ExperienceItem({ exp, index, onChange, onRemove }) {
           value={exp.description || ''}
           onChange={(e) => onChange(index, 'description', e.target.value)}
           rows={2}
-          className="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40"
         />
       </div>
     </div>
@@ -90,13 +91,13 @@ function PortfolioItem({ item, index, onChange, onRemove }) {
   };
 
   return (
-    <div className="p-4 bg-gray-700/50 rounded-lg border border-gray-600 space-y-3">
+    <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3">
       <div className="flex justify-between items-center">
         <h4 className="text-sm font-medium text-gray-300">Portfolio #{index + 1}</h4>
         <button
           type="button"
           onClick={() => onRemove(index)}
-          className="text-red-400 hover:text-red-300 text-sm"
+          className="text-red-400 hover:text-red-300 text-sm transition-colors"
         >
           Remove
         </button>
@@ -108,18 +109,18 @@ function PortfolioItem({ item, index, onChange, onRemove }) {
           value={item.description || ''}
           onChange={(e) => onChange(index, 'description', e.target.value)}
           rows={2}
-          className="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40"
         />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1">Image</label>
         <div className="flex items-center gap-3">
           {item.imageUrl ? (
-            <img src={item.imageUrl} alt="" className="h-12 w-12 rounded object-cover border border-gray-600" />
+            <img src={item.imageUrl} alt="" className="h-12 w-12 rounded-lg object-cover border border-white/10" />
           ) : (
-            <div className="h-12 w-12 rounded bg-gray-600 flex items-center justify-center text-xs text-gray-400">none</div>
+            <div className="h-12 w-12 rounded-lg bg-white/10 flex items-center justify-center text-xs text-gray-400">none</div>
           )}
-          <label className="cursor-pointer px-3 py-1.5 bg-gray-600 hover:bg-gray-500 text-white rounded-lg text-sm font-medium transition-colors">
+          <label className="cursor-pointer px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-sm font-medium transition-colors">
             {uploading ? 'Uploading...' : 'Upload Image'}
             <input type="file" accept="image/*" className="hidden" onChange={handleImage} disabled={uploading} />
           </label>
@@ -299,20 +300,21 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen text-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Profile Settings</h1>
+        <Reveal className="mb-8">
+          <h1 className="text-3xl font-bold text-gradient">Profile Settings</h1>
           <p className="text-gray-400 mt-1">Manage your account and provider information</p>
-        </div>
+        </Reveal>
 
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 mb-8">
-          <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-700">
+        <Reveal className="mb-8">
+        <div className="glass rounded-2xl p-6 transition-all hover:-translate-y-0.5">
+          <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/10">
             <div className="relative">
               {avatar ? (
-                <img src={avatar} alt={user?.name} className="w-16 h-16 rounded-full object-cover border border-gray-600" />
+                <img src={avatar} alt={user?.name} className="w-16 h-16 rounded-full object-cover border border-white/10" />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center text-2xl font-bold glow-indigo">
                   {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
               )}
@@ -320,11 +322,11 @@ export default function Profile() {
             <div>
               <h2 className="text-xl font-semibold">{user?.name}</h2>
               <p className="text-gray-400 text-sm">{user?.email}</p>
-              <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium border bg-blue-500/20 text-blue-400 border-blue-500/50 capitalize">
+              <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium border bg-indigo-500/20 text-indigo-300 border-indigo-500/50 capitalize">
                 {user?.role}
               </span>
               <div className="mt-2">
-                <label className="cursor-pointer text-sm text-blue-400 hover:text-blue-300">
+                <label className="cursor-pointer text-sm text-indigo-400 hover:text-indigo-300">
                   {avatarUploading ? 'Uploading...' : 'Change profile picture'}
                   <input
                     type="file"
@@ -339,12 +341,12 @@ export default function Profile() {
           </div>
 
           {profileMessage && (
-            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/50 rounded-lg text-green-400 text-sm">
+            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/50 rounded-xl text-green-400 text-sm">
               {profileMessage}
             </div>
           )}
           {profileError && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-xl text-red-400 text-sm">
               {profileError}
             </div>
           )}
@@ -371,9 +373,9 @@ export default function Profile() {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Required to change your name or email"
-                className={`w-full px-4 py-2.5 bg-gray-700 border ${
-                  profileFormErrors.currentPassword ? 'border-red-500' : 'border-gray-600'
-                } rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                className={`w-full px-4 py-2.5 bg-white/5 border ${
+                  profileFormErrors.currentPassword ? 'border-red-500' : 'border-white/10'
+                } rounded-xl text-white placeholder-gray-500 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40`}
               />
               {profileFormErrors.currentPassword && (
                 <p className="mt-1 text-sm text-red-400">{profileFormErrors.currentPassword}</p>
@@ -386,7 +388,7 @@ export default function Profile() {
               <button
                 type="submit"
                 disabled={savingProfile}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60 text-white rounded-xl font-medium transition-all glow-indigo"
               >
                 {savingProfile ? (
                   <span className="flex items-center gap-2">
@@ -400,24 +402,26 @@ export default function Profile() {
             </div>
           </form>
         </div>
+        </Reveal>
 
         {isProvider && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+          <Reveal>
+          <div className="glass rounded-2xl p-6 transition-all hover:-translate-y-0.5">
             <h2 className="text-xl font-semibold mb-6">Provider Profile</h2>
 
             {providerMessage && (
-              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/50 rounded-lg text-green-400 text-sm">
+              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/50 rounded-xl text-green-400 text-sm">
                 {providerMessage}
               </div>
             )}
             {providerError && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-xl text-red-400 text-sm">
                 {providerError}
               </div>
             )}
 
             {providerProfile && (providerProfile.averageRating !== undefined || providerProfile.rating !== undefined) && (
-              <div className="flex items-center gap-6 mb-6 p-4 bg-gray-700/30 rounded-lg">
+              <div className="flex items-center gap-6 mb-6 p-4 bg-white/5 border border-white/10 rounded-xl">
                 <div>
                   <p className="text-sm text-gray-400">Average Rating</p>
                   <p className="text-xl font-bold text-yellow-400">
@@ -433,7 +437,7 @@ export default function Profile() {
 
             {loadingProvider ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" />
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500" />
               </div>
             ) : (
               <form onSubmit={handleProviderSave} className="space-y-6">
@@ -444,7 +448,7 @@ export default function Profile() {
                     onChange={(e) => setBio(e.target.value)}
                     rows={4}
                     placeholder="Tell clients about yourself and your expertise..."
-                    className="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40"
                   />
                 </div>
 
@@ -462,12 +466,12 @@ export default function Profile() {
                         }
                       }}
                       placeholder="Type a skill and press Enter or Add"
-                      className="flex-1 px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40"
                     />
                     <button
                       type="button"
                       onClick={addSkill}
-                      className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 text-white rounded-xl text-sm font-medium transition-all glow-indigo"
                     >
                       Add
                     </button>
@@ -477,7 +481,7 @@ export default function Profile() {
                       {skills.map((skill, i) => (
                         <span
                           key={i}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-full text-sm border border-blue-500/30"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 text-indigo-300 rounded-full text-sm border border-indigo-500/30"
                         >
                           {skill}
                           <button
@@ -503,7 +507,7 @@ export default function Profile() {
                     <button
                       type="button"
                       onClick={addExperience}
-                      className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors"
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition-colors"
                     >
                       + Add Experience
                     </button>
@@ -539,7 +543,7 @@ export default function Profile() {
                     <button
                       type="button"
                       onClick={addPortfolio}
-                      className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors"
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition-colors"
                     >
                       + Add Portfolio Item
                     </button>
@@ -561,11 +565,11 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4 border-t border-gray-700">
+                <div className="flex justify-end pt-4 border-t border-white/10">
                   <button
                     type="submit"
                     disabled={savingProvider}
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                    className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60 text-white rounded-xl font-medium transition-all glow-indigo"
                   >
                     {savingProvider ? (
                       <span className="flex items-center gap-2">
@@ -580,6 +584,7 @@ export default function Profile() {
               </form>
             )}
           </div>
+          </Reveal>
         )}
       </div>
     </div>

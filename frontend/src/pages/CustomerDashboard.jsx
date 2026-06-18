@@ -1,20 +1,22 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import api from '../api/axios';
 import TasksWidget from '../components/project/TasksWidget';
+import { Reveal, Stagger, StaggerItem } from '../components/common/Motion';
+import Loading from '../components/common/Loading';
 
 const statusColors = {
-  pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
-  accepted: 'bg-blue-500/20 text-blue-400 border-blue-500/50',
-  rejected: 'bg-red-500/20 text-red-400 border-red-500/50',
-  completed: 'bg-green-500/20 text-green-400 border-green-500/50',
-  'in-progress': 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50',
-  delivered: 'bg-purple-500/20 text-purple-400 border-purple-500/50',
+  pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40',
+  accepted: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+  rejected: 'bg-red-500/20 text-red-300 border-red-500/40',
+  completed: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+  'in-progress': 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+  delivered: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
 };
 
 function StatusBadge({ status }) {
-  const color = statusColors[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+  const color = statusColors[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/40';
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-medium border ${color}`}>
       {status?.charAt(0).toUpperCase() + status?.slice(1)}
@@ -22,10 +24,10 @@ function StatusBadge({ status }) {
   );
 }
 
-function StatCard({ title, value, icon }) {
+function StatCard({ title, value, icon, gradient = 'from-indigo-500 to-blue-500' }) {
   return (
-    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 flex items-center gap-4">
-      <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
+    <div className="glass rounded-2xl p-6 flex items-center gap-4 transition-transform hover:-translate-y-1">
+      <div className={`p-3 rounded-xl bg-gradient-to-br ${gradient} text-white`}>
         {icon}
       </div>
       <div>
@@ -67,61 +69,71 @@ export default function CustomerDashboard() {
     }
   };
 
-  const activeRequests = requests.filter((r) => r.status !== 'completed' && r.status !== 'rejected');
+  // Derived once per requests change (avoids re-filtering on every render).
+  const activeRequests = useMemo(
+    () => requests.filter((r) => r.status !== 'completed' && r.status !== 'rejected'),
+    [requests]
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading size="lg" text="Loading your dashboard…" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">
-            Welcome back, {user?.name || 'Customer'}
+    <div className="min-h-screen text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <Reveal className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tight">
+            Welcome back, <span className="text-gradient">{user?.name || 'Customer'}</span>
           </h1>
           <p className="text-gray-400 mt-1">Manage your service requests and projects</p>
-        </div>
+        </Reveal>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/40 rounded-xl text-red-400">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <StatCard
-            title="Active Requests"
-            value={activeRequests.length}
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            }
-          />
-          <StatCard
-            title="Completed Projects"
-            value={completedProjects.length}
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-          />
-        </div>
+        <Stagger className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <StaggerItem>
+            <StatCard
+              title="Active Requests"
+              value={activeRequests.length}
+              gradient="from-indigo-500 to-blue-500"
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              }
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <StatCard
+              title="Completed Projects"
+              value={completedProjects.length}
+              gradient="from-emerald-500 to-teal-500"
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+          </StaggerItem>
+        </Stagger>
 
         <TasksWidget />
 
-        <div className="bg-gray-800 rounded-xl border border-gray-700 mb-8">
-          <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+        <Reveal className="glass rounded-2xl mb-8">
+          <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
             <h2 className="text-xl font-semibold">Active Requests</h2>
             <button
               onClick={() => navigate('/services')}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 text-white rounded-xl text-sm font-medium transition-all glow-indigo"
             >
               Browse Services
             </button>
@@ -132,7 +144,7 @@ export default function CustomerDashboard() {
                 <p>No requests yet.</p>
                 <button
                   onClick={() => navigate('/services')}
-                  className="mt-2 text-blue-400 hover:text-blue-300 underline"
+                  className="mt-2 text-indigo-400 hover:text-indigo-300 underline"
                 >
                   Browse services to create your first request
                 </button>
@@ -140,7 +152,7 @@ export default function CustomerDashboard() {
             ) : (
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-gray-400 text-sm border-b border-gray-700">
+                  <tr className="text-left text-gray-400 text-sm border-b border-white/10">
                     <th className="px-6 py-3 font-medium">Service</th>
                     <th className="px-6 py-3 font-medium">Provider</th>
                     <th className="px-6 py-3 font-medium">Budget</th>
@@ -157,7 +169,7 @@ export default function CustomerDashboard() {
                           navigate(`/projects/${req.projectId || req._id}`);
                         }
                       }}
-                      className={`border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors ${
+                      className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
                         req.status === 'accepted' || req.status === 'in-progress' || req.status === 'completed' || req.status === 'delivered'
                           ? 'cursor-pointer'
                           : ''
@@ -178,17 +190,17 @@ export default function CustomerDashboard() {
               </table>
             )}
           </div>
-        </div>
+        </Reveal>
 
         {completedProjects.length > 0 && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-700">
+          <Reveal className="glass rounded-2xl">
+            <div className="px-6 py-4 border-b border-white/10">
               <h2 className="text-xl font-semibold">Completed Projects</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-gray-400 text-sm border-b border-gray-700">
+                  <tr className="text-left text-gray-400 text-sm border-b border-white/10">
                     <th className="px-6 py-3 font-medium">Service</th>
                     <th className="px-6 py-3 font-medium">Provider</th>
                     <th className="px-6 py-3 font-medium">Budget</th>
@@ -197,7 +209,7 @@ export default function CustomerDashboard() {
                 </thead>
                 <tbody>
                   {completedProjects.map((proj) => (
-                    <tr key={proj._id || proj.id} className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors cursor-pointer"
+                    <tr key={proj._id || proj.id} className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={() => navigate(`/projects/${proj._id || proj.id}`)}
                     >
                       <td className="px-6 py-4 text-sm">{proj.serviceName || proj.service?.title || '-'}</td>
@@ -211,7 +223,7 @@ export default function CustomerDashboard() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </Reveal>
         )}
       </div>
     </div>

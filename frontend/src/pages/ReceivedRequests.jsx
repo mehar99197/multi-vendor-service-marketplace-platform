@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import api from '../api/axios';
+import { Reveal, Stagger, StaggerItem } from '../components/common/Motion';
 
 export default function ReceivedRequests() {
   const navigate = useNavigate();
@@ -39,33 +41,35 @@ export default function ReceivedRequests() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" />
       </div>
     );
   }
 
-  const pendingRequests = requests.filter((r) => r.status === 'pending');
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Received Requests</h1>
+        <Reveal className="mb-8">
+          <h1 className="text-3xl font-bold text-gradient">Received Requests</h1>
           <p className="text-gray-400 mt-1">Review and respond to client requests</p>
-        </div>
+        </Reveal>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">{error}</div>
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400">{error}</div>
         )}
 
-        <div className="bg-gray-800 rounded-xl border border-gray-700">
-          {requests.length === 0 ? (
-            <div className="p-6 text-center text-gray-400">No requests received yet.</div>
-          ) : (
-            <div className="divide-y divide-gray-700">
-              {requests.map((req) => (
-                <div key={req._id} className="p-6 hover:bg-gray-700/30 transition-colors">
+        {requests.length === 0 ? (
+          <div className="glass rounded-2xl p-6 text-center text-gray-400">No requests received yet.</div>
+        ) : (
+          <Stagger className="space-y-4">
+            {requests.map((req) => (
+              <StaggerItem key={req._id}>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+                  className="glass rounded-2xl p-6"
+                >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="text-lg font-medium">{req.service?.title || req.serviceName || 'Service Request'}</h3>
@@ -93,14 +97,14 @@ export default function ReceivedRequests() {
                         <button
                           onClick={() => handleAction(req._id, 'accepted')}
                           disabled={actionLoading === req._id}
-                          className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 text-white rounded-lg text-sm font-medium"
+                          className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 text-white rounded-xl text-sm font-medium transition-all"
                         >
                           {actionLoading === req._id ? 'Processing...' : 'Accept'}
                         </button>
                         <button
                           onClick={() => handleAction(req._id, 'rejected')}
                           disabled={actionLoading === req._id}
-                          className="px-5 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white rounded-lg text-sm font-medium"
+                          className="px-5 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white rounded-xl text-sm font-medium transition-all"
                         >
                           Reject
                         </button>
@@ -109,17 +113,17 @@ export default function ReceivedRequests() {
                     {req.status !== 'pending' && req.status !== 'rejected' && req.projectId && (
                       <button
                         onClick={() => navigate(`/projects/${req.projectId}`)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                        className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 text-white rounded-xl text-sm font-medium transition-all glow-indigo"
                       >
                         View Project
                       </button>
                     )}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                </motion.div>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        )}
       </div>
     </div>
   );

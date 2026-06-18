@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import { Reveal } from '../components/common/Motion';
 
 export default function MyRequests() {
   const navigate = useNavigate();
@@ -26,32 +27,32 @@ export default function MyRequests() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">My Requests</h1>
+        <Reveal className="mb-8">
+          <h1 className="text-3xl font-bold text-gradient">My Requests</h1>
           <p className="text-gray-400 mt-1">Track all your service requests</p>
-        </div>
+        </Reveal>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">{error}</div>
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400">{error}</div>
         )}
 
-        <div className="bg-gray-800 rounded-xl border border-gray-700">
+        <Reveal className="glass rounded-2xl">
           {requests.length === 0 ? (
             <div className="p-6 text-center text-gray-400">No requests yet.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-gray-400 text-sm border-b border-gray-700">
+                  <tr className="text-left text-gray-400 text-sm border-b border-white/10">
                     <th className="px-6 py-3 font-medium">Service</th>
                     <th className="px-6 py-3 font-medium">Provider</th>
                     <th className="px-6 py-3 font-medium">Budget</th>
@@ -64,7 +65,7 @@ export default function MyRequests() {
                     <tr
                       key={req._id}
                       onClick={() => req.projectId && navigate(`/projects/${req.projectId}`)}
-                      className={`border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors ${
+                      className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
                         req.projectId ? 'cursor-pointer' : ''
                       }`}
                     >
@@ -88,7 +89,7 @@ export default function MyRequests() {
               </table>
             </div>
           )}
-        </div>
+        </Reveal>
       </div>
     </div>
   );

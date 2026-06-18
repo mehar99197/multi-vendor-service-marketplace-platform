@@ -1,7 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 import api from '../api/axios';
+import { Reveal } from '../components/common/Motion';
 import StarRating from '../components/common/StarRating';
 import MessageThread from '../components/project/MessageThread';
 import TaskPanel from '../components/project/TaskPanel';
@@ -32,19 +34,21 @@ function WorkflowSteps({ currentStatus }) {
         {STEPS.map((step, i) => {
           const isCompleted = i < currentIndex;
           const isCurrent = i === currentIndex;
-          const isFuture = i > currentIndex;
           const showLine = i < STEPS.length - 1;
 
           return (
             <div key={step.key} className="flex items-center">
               <div className="flex flex-col items-center">
-                <div
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.4, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
                     isCompleted
-                      ? 'bg-green-500 border-green-500 text-white'
+                      ? 'bg-emerald-500 border-emerald-400 text-white glow-indigo'
                       : isCurrent
-                      ? 'bg-blue-500 border-blue-500 text-white'
-                      : 'bg-gray-800 border-gray-600 text-gray-500'
+                      ? 'bg-gradient-to-br from-indigo-500 to-fuchsia-500 border-fuchsia-400 text-white glow-indigo'
+                      : 'bg-white/5 border-white/10 text-gray-500'
                   }`}
                 >
                   {isCompleted ? (
@@ -54,13 +58,13 @@ function WorkflowSteps({ currentStatus }) {
                   ) : (
                     step.icon
                   )}
-                </div>
+                </motion.div>
                 <span
                   className={`mt-2 text-xs font-medium whitespace-nowrap ${
                     isCompleted
-                      ? 'text-green-400'
+                      ? 'text-emerald-400'
                       : isCurrent
-                      ? 'text-blue-400'
+                      ? 'text-fuchsia-300'
                       : 'text-gray-500'
                   }`}
                 >
@@ -70,7 +74,7 @@ function WorkflowSteps({ currentStatus }) {
               {showLine && (
                 <div
                   className={`w-16 sm:w-24 h-0.5 mx-2 rounded ${
-                    isCompleted ? 'bg-green-500' : 'bg-gray-700'
+                    isCompleted ? 'bg-emerald-500' : 'bg-white/10'
                   }`}
                 />
               )}
@@ -86,8 +90,8 @@ function UpdateItem({ update }) {
   const authorName = update.addedBy?.name || update.userName || 'User';
   const text = update.text || update.message || '';
   return (
-    <div className="flex gap-3 p-4 bg-gray-700/30 rounded-lg border border-gray-700">
-      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+    <div className="flex gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center text-sm font-bold flex-shrink-0">
         {authorName.charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
@@ -226,15 +230,15 @@ export default function ProjectTracking() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-red-400 text-center">
           <p className="text-xl font-semibold">Error loading project</p>
           <p className="mt-2 text-gray-400">{error}</p>
@@ -245,7 +249,7 @@ export default function ProjectTracking() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-400">Project not found</p>
       </div>
     );
@@ -264,31 +268,31 @@ export default function ProjectTracking() {
   const counterpart = isCustomerParty ? project.provider : isProviderParty ? project.customer : null;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen text-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">{project.serviceName || project.service?.title || 'Project'}</h1>
+        <Reveal className="mb-8">
+          <h1 className="text-3xl font-bold text-gradient">{project.serviceName || project.service?.title || 'Project'}</h1>
           <p className="text-gray-400 mt-1">Track project progress and updates</p>
-        </div>
+        </Reveal>
 
         {actionError && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-400">
             {actionError}
           </div>
         )}
 
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 mb-8">
+        <Reveal className="glass rounded-2xl p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Progress</h2>
-            <span className="px-3 py-1 rounded-full text-sm font-medium border bg-blue-500/20 text-blue-400 border-blue-500/50 capitalize">
+            <span className="px-3 py-1 rounded-full text-sm font-medium border bg-indigo-500/20 text-indigo-300 border-indigo-500/40 capitalize">
               {project.status}
             </span>
           </div>
           <WorkflowSteps currentStatus={project.status} />
-        </div>
+        </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+          <Reveal className="glass rounded-2xl p-6">
             <h3 className="text-lg font-semibold mb-4">Project Details</h3>
             <div className="space-y-3">
               <div>
@@ -322,17 +326,17 @@ export default function ProjectTracking() {
                 </div>
               )}
             </div>
-          </div>
+          </Reveal>
 
           {(isProvider || isCustomer) && (
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <Reveal delay={0.1} className="glass rounded-2xl p-6">
               <h3 className="text-lg font-semibold mb-4">Actions</h3>
               <div className="space-y-4">
                 {isProvider && nextLabel && ['pending', 'accepted', 'in-progress'].includes(project.status) && (
                   <button
                     onClick={() => handleStatusUpdate(nextStatus)}
                     disabled={statusLoading}
-                    className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                    className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60 text-white rounded-xl font-medium glow-indigo transition-all"
                   >
                     {statusLoading ? (
                       <span className="flex items-center justify-center gap-2">
@@ -373,7 +377,7 @@ export default function ProjectTracking() {
                     <p className="text-sm text-green-400">This project has been delivered and completed.</p>
                     {isCustomer &&
                       (myReview ? (
-                        <div className="rounded-lg border border-gray-700 bg-gray-700/30 p-4">
+                        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                           <p className="text-sm font-medium text-white">Your review</p>
                           <div className="mt-1">
                             <StarRating rating={myReview.rating} />
@@ -385,7 +389,7 @@ export default function ProjectTracking() {
                       ) : (
                         <form
                           onSubmit={handleSubmitReview}
-                          className="rounded-lg border border-gray-700 bg-gray-700/30 p-4"
+                          className="rounded-xl border border-white/10 bg-white/5 p-4"
                         >
                           <p className="text-sm font-medium text-white">Leave a review</p>
                           <p className="mt-1 text-xs text-gray-400">
@@ -399,13 +403,13 @@ export default function ProjectTracking() {
                             onChange={(e) => setReviewFeedback(e.target.value)}
                             rows={3}
                             placeholder="Share details about your experience (optional)..."
-                            className="mt-3 w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                            className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 resize-y"
                           />
                           {reviewError && <p className="mt-2 text-sm text-red-400">{reviewError}</p>}
                           <button
                             type="submit"
                             disabled={reviewSubmitting || !reviewRating}
-                            className="mt-3 w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                            className="mt-3 w-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60 text-white rounded-xl text-sm font-medium glow-indigo transition-all"
                           >
                             {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
                           </button>
@@ -414,14 +418,14 @@ export default function ProjectTracking() {
                   </div>
                 )}
               </div>
-            </div>
+            </Reveal>
           )}
         </div>
 
         {isParty && (
-          <div className="mb-8">
+          <Reveal className="mb-8">
             <MessageThread projectId={id} />
-          </div>
+          </Reveal>
         )}
 
         {isParty && (
@@ -433,7 +437,7 @@ export default function ProjectTracking() {
           </div>
         )}
 
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+        <Reveal className="glass rounded-2xl p-6">
           <h3 className="text-lg font-semibold mb-4">Updates & Activity Log</h3>
 
           <form onSubmit={handleAddUpdate} className="mb-6">
@@ -443,12 +447,12 @@ export default function ProjectTracking() {
                 value={updateMessage}
                 onChange={(e) => setUpdateMessage(e.target.value)}
                 placeholder="Add an update..."
-                className="flex-1 px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-colors"
               />
               <button
                 type="submit"
                 disabled={sendingUpdate || !updateMessage.trim()}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60 text-white rounded-xl text-sm font-medium glow-indigo transition-all"
               >
                 {sendingUpdate ? (
                   <span className="flex items-center gap-2">
@@ -473,7 +477,7 @@ export default function ProjectTracking() {
                 ))}
             </div>
           )}
-        </div>
+        </Reveal>
       </div>
     </div>
   );

@@ -1,22 +1,16 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import api from '../api/axios';
 import { getMyServices, deleteService } from '../api/services';
 import TasksWidget from '../components/project/TasksWidget';
+import { Reveal, Stagger, StaggerItem } from '../components/common/Motion';
+import Loading from '../components/common/Loading';
 
-function StatCard({ title, value, icon, color = 'blue' }) {
-  const colorMap = {
-    blue: 'bg-blue-500/10 text-blue-400',
-    green: 'bg-green-500/10 text-green-400',
-    yellow: 'bg-yellow-500/10 text-yellow-400',
-    purple: 'bg-purple-500/10 text-purple-400',
-    indigo: 'bg-indigo-500/10 text-indigo-400',
-  };
-  const iconBg = colorMap[color] || colorMap.blue;
+function StatCard({ title, value, icon, gradient = 'from-indigo-500 to-blue-500' }) {
   return (
-    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 flex items-center gap-4">
-      <div className={`p-3 rounded-lg ${iconBg}`}>
+    <div className="glass rounded-2xl p-6 flex items-center gap-4 transition-transform hover:-translate-y-1">
+      <div className={`p-3 rounded-xl bg-gradient-to-br ${gradient} text-white`}>
         {icon}
       </div>
       <div>
@@ -94,103 +88,112 @@ export default function ProviderDashboard() {
     }
   };
 
+  // Derived once per requests change.
+  const pendingRequests = useMemo(() => requests.filter((r) => r.status === 'pending'), [requests]);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading size="lg" text="Loading your dashboard…" />
       </div>
     );
   }
 
-  const pendingRequests = requests.filter((r) => r.status === 'pending');
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="min-h-screen text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <Reveal className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">
-              Welcome back, {user?.name || 'Provider'}
+            <h1 className="text-4xl font-bold tracking-tight">
+              Welcome back, <span className="text-gradient">{user?.name || 'Provider'}</span>
             </h1>
             <p className="text-gray-400 mt-1">Manage your services, projects, and earnings</p>
           </div>
           <Link
             to="/services/create"
-            className="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 text-white rounded-xl font-medium transition-all glow-indigo"
           >
             + Create Service
           </Link>
-        </div>
+        </Reveal>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/40 rounded-xl text-red-400">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Earnings"
-            value={`$${(stats.earningsTotal || 0).toLocaleString()}`}
-            color="green"
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-          />
-          <StatCard
-            title="Active Projects"
-            value={stats.activeProjects || projects.length}
-            color="blue"
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            }
-          />
-          <StatCard
-            title="Pending Requests"
-            value={stats.pendingRequests || pendingRequests.length}
-            color="yellow"
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-          />
-          <StatCard
-            title="Average Rating"
-            value={stats.averageRating ? `${stats.averageRating.toFixed(1)} / 5` : 'N/A'}
-            color="purple"
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            }
-          />
-        </div>
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StaggerItem>
+            <StatCard
+              title="Total Earnings"
+              value={`$${(stats.earningsTotal || 0).toLocaleString()}`}
+              gradient="from-emerald-500 to-teal-500"
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <StatCard
+              title="Active Projects"
+              value={stats.activeProjects || projects.length}
+              gradient="from-indigo-500 to-blue-500"
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              }
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <StatCard
+              title="Pending Requests"
+              value={stats.pendingRequests || pendingRequests.length}
+              gradient="from-yellow-500 to-amber-500"
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <StatCard
+              title="Average Rating"
+              value={stats.averageRating ? `${stats.averageRating.toFixed(1)} / 5` : 'N/A'}
+              gradient="from-fuchsia-500 to-purple-500"
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+              }
+            />
+          </StaggerItem>
+        </Stagger>
 
-        <div className="bg-gray-800 rounded-xl border border-gray-700 mb-8">
-          <div className="px-6 py-4 border-b border-gray-700">
+        <Reveal className="glass rounded-2xl mb-8 overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/10">
             <h2 className="text-xl font-semibold">Earnings Overview</h2>
           </div>
           <div className="p-6">
-            <div className="text-4xl font-bold text-green-400">
+            <div className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
               ${(stats.earningsTotal || 0).toLocaleString()}
             </div>
             <p className="text-gray-400 mt-1">Total lifetime earnings</p>
           </div>
-        </div>
+        </Reveal>
 
         <TasksWidget />
 
-        <div className="bg-gray-800 rounded-xl border border-gray-700 mb-8">
-          <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+        <Reveal className="glass rounded-2xl mb-8">
+          <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
             <h2 className="text-xl font-semibold">My Services ({myServices.length})</h2>
             <Link
               to="/services/create"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 text-white rounded-xl text-sm font-medium transition-all glow-indigo"
             >
               + Create Service
             </Link>
@@ -204,7 +207,7 @@ export default function ProviderDashboard() {
               .
             </div>
           ) : (
-            <div className="divide-y divide-gray-700">
+            <div className="divide-y divide-white/5">
               {myServices.map((svc) => (
                 <div
                   key={svc._id}
@@ -216,17 +219,17 @@ export default function ProviderDashboard() {
                       <span
                         className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
                           svc.status === 'active'
-                            ? 'bg-green-500/20 text-green-400 border-green-500/50'
-                            : 'bg-gray-500/20 text-gray-400 border-gray-500/50'
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                            : 'bg-gray-500/20 text-gray-400 border-gray-500/40'
                         }`}
                       >
                         {svc.status}
                       </span>
                     </div>
                     <div className="mt-1 text-sm text-gray-400">
-                      <span className="text-blue-400">{svc.category}</span>
+                      <span className="text-indigo-400">{svc.category}</span>
                       <span className="mx-2">·</span>
-                      <span className="text-green-400">${svc.price}</span>
+                      <span className="text-emerald-400">${svc.price}</span>
                       <span className="mx-2">·</span>
                       <span>{svc.deliveryTime} days</span>
                     </div>
@@ -234,19 +237,19 @@ export default function ProviderDashboard() {
                   <div className="flex gap-2 flex-shrink-0">
                     <Link
                       to={`/services/${svc._id}`}
-                      className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs font-medium transition-colors"
+                      className="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg text-xs font-medium transition-colors"
                     >
                       View
                     </Link>
                     <Link
                       to={`/services/edit/${svc._id}`}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
+                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium transition-colors"
                     >
                       Edit
                     </Link>
                     <button
                       onClick={() => handleDeleteService(svc._id)}
-                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
+                      className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-medium transition-colors"
                     >
                       Delete
                     </button>
@@ -255,18 +258,18 @@ export default function ProviderDashboard() {
               ))}
             </div>
           )}
-        </div>
+        </Reveal>
 
         {pendingRequests.length > 0 && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 mb-8">
-            <div className="px-6 py-4 border-b border-gray-700">
+          <Reveal className="glass rounded-2xl mb-8">
+            <div className="px-6 py-4 border-b border-white/10">
               <h2 className="text-xl font-semibold">
                 Pending Requests ({pendingRequests.length})
               </h2>
             </div>
-            <div className="divide-y divide-gray-700">
+            <div className="divide-y divide-white/5">
               {pendingRequests.map((req) => (
-                <div key={req._id || req.id} className="p-6 hover:bg-gray-700/30 transition-colors">
+                <div key={req._id || req.id} className="p-6 hover:bg-white/5 transition-colors">
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="text-lg font-medium text-white">
@@ -274,7 +277,7 @@ export default function ProviderDashboard() {
                       </h3>
                       <div className="mt-2 space-y-1 text-sm text-gray-400">
                         <p><span className="text-gray-500">Client:</span> {req.customerName || req.customer?.name || 'N/A'}</p>
-                        <p><span className="text-gray-500">Budget:</span> <span className="text-green-400">${req.budget || 0}</span></p>
+                        <p><span className="text-gray-500">Budget:</span> <span className="text-emerald-400">${req.budget || 0}</span></p>
                         <p><span className="text-gray-500">Deadline:</span> {req.deadline ? new Date(req.deadline).toLocaleDateString() : 'N/A'}</p>
                       </div>
                       {req.requirements && (
@@ -287,7 +290,7 @@ export default function ProviderDashboard() {
                       <button
                         onClick={() => handleRequestAction(req._id || req.id, 'accepted')}
                         disabled={actionLoading === (req._id || req.id)}
-                        className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                        className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-600/50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium transition-colors"
                       >
                         {actionLoading === (req._id || req.id) ? (
                           <span className="flex items-center gap-2">
@@ -301,7 +304,7 @@ export default function ProviderDashboard() {
                       <button
                         onClick={() => handleRequestAction(req._id || req.id, 'rejected')}
                         disabled={actionLoading === (req._id || req.id)}
-                        className="px-5 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                        className="px-5 py-2 bg-red-600 hover:bg-red-500 disabled:bg-red-600/50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium transition-colors"
                       >
                         Reject
                       </button>
@@ -310,18 +313,18 @@ export default function ProviderDashboard() {
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
         )}
 
         {projects.length > 0 && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-700">
+          <Reveal className="glass rounded-2xl">
+            <div className="px-6 py-4 border-b border-white/10">
               <h2 className="text-xl font-semibold">Active Projects ({projects.length})</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-gray-400 text-sm border-b border-gray-700">
+                  <tr className="text-left text-gray-400 text-sm border-b border-white/10">
                     <th className="px-6 py-3 font-medium">Service</th>
                     <th className="px-6 py-3 font-medium">Customer</th>
                     <th className="px-6 py-3 font-medium">Budget</th>
@@ -331,19 +334,19 @@ export default function ProviderDashboard() {
                 </thead>
                 <tbody>
                   {projects.map((proj) => (
-                    <tr key={proj._id || proj.id} className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors">
+                    <tr key={proj._id || proj.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4 text-sm">{proj.serviceName || proj.service?.title || '-'}</td>
                       <td className="px-6 py-4 text-sm">{proj.customerName || proj.customer?.name || '-'}</td>
                       <td className="px-6 py-4 text-sm">${proj.budget || 0}</td>
                       <td className="px-6 py-4">
-                        <span className="px-2 py-1 rounded-full text-xs font-medium border bg-blue-500/20 text-blue-400 border-blue-500/50">
+                        <span className="px-2 py-1 rounded-full text-xs font-medium border bg-indigo-500/20 text-indigo-300 border-indigo-500/40">
                           {proj.status?.charAt(0).toUpperCase() + proj.status?.slice(1)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <button
                           onClick={() => navigate(`/projects/${proj._id || proj.id}`)}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium transition-colors"
                         >
                           Updates
                         </button>
@@ -353,7 +356,7 @@ export default function ProviderDashboard() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </Reveal>
         )}
       </div>
     </div>

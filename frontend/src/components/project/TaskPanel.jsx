@@ -64,7 +64,7 @@ export default function TaskPanel({ projectId }) {
   }
 
   return (
-    <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+    <div className="glass rounded-2xl p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">My Follow-up Tasks</h3>
         <span className="text-xs text-gray-500">private to you</span>
@@ -77,18 +77,18 @@ export default function TaskPanel({ projectId }) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Add a follow-up task…"
           maxLength={200}
-          className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
         />
         <input
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
         />
         <button
           type="submit"
           disabled={adding || !title.trim()}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60 text-white rounded-xl text-sm font-medium glow-indigo transition-all"
         >
           Add
         </button>
@@ -105,13 +105,13 @@ export default function TaskPanel({ projectId }) {
           {tasks.map((task) => (
             <li
               key={task._id}
-              className="flex items-center gap-3 rounded-lg border border-gray-700 bg-gray-700/30 px-3 py-2"
+              className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
             >
               <input
                 type="checkbox"
                 checked={task.completed}
                 onChange={() => handleToggle(task)}
-                className="h-4 w-4 rounded border-gray-600 bg-gray-700 accent-indigo-500 cursor-pointer"
+                className="h-4 w-4 rounded border-white/10 bg-white/5 accent-indigo-500 cursor-pointer"
               />
               <div className="min-w-0 flex-1">
                 <p className={`text-sm ${task.completed ? 'line-through text-gray-500' : 'text-white'}`}>
