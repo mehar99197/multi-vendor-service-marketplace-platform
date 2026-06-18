@@ -36,7 +36,12 @@ const notificationSchema = new mongoose.Schema({
   },
 });
 
-// The bell query: a user's notifications, newest first / unread count.
+// Dropdown list: a user's notifications, newest first. This index serves both
+// the `user` filter and the `createdAt` sort directly, so the limited fetch is
+// a pure indexed range scan (no blocking in-memory sort).
+notificationSchema.index({ user: 1, createdAt: -1 });
+// Unread badge / mark-all: the { user, read } prefix serves the unread count
+// (countDocuments) and updateMany as a covered index range — no collection scan.
 notificationSchema.index({ user: 1, read: 1, createdAt: -1 });
 
 const Notification = mongoose.model('Notification', notificationSchema);

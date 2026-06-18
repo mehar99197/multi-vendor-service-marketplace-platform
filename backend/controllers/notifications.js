@@ -5,11 +5,12 @@ const getNotifications = async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 30, 100);
 
-    const notifications = await Notification.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .limit(limit);
-
-    const unreadCount = await Notification.countDocuments({ user: req.user._id, read: false });
+    // Independent queries — fetch the list and count the unread badge in one
+    // round-trip instead of two sequential awaits.
+    const [notifications, unreadCount] = await Promise.all([
+      Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(limit),
+      Notification.countDocuments({ user: req.user._id, read: false }),
+    ]);
 
     res.json({ notifications, unreadCount });
   } catch (error) {
