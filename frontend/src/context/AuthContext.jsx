@@ -6,12 +6,15 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [token, setToken] = useState(localStorage.getItem('token'))
+  // Token lives in sessionStorage (per-tab), NOT localStorage (shared across tabs)
+  // so you can be signed into different accounts in different tabs — and reloading
+  // one tab keeps its own session instead of picking up another tab's login.
+  const [token, setToken] = useState(sessionStorage.getItem('token'))
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   const loadUser = useCallback(async () => {
-    const storedToken = localStorage.getItem('token')
+    const storedToken = sessionStorage.getItem('token')
     if (!storedToken) {
       setLoading(false)
       return
@@ -20,7 +23,7 @@ export function AuthProvider({ children }) {
       const res = await api.get('/auth/me')
       setUser(res.data.user || res.data)
     } catch {
-      localStorage.removeItem('token')
+      sessionStorage.removeItem('token')
       setToken(null)
       setUser(null)
     } finally {
@@ -41,7 +44,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password })
     const { token: newToken, ...userData } = res.data
-    localStorage.setItem('token', newToken)
+    sessionStorage.setItem('token', newToken)
     setToken(newToken)
     setUser(userData)
     return userData
@@ -50,14 +53,14 @@ export function AuthProvider({ children }) {
   const register = async (name, email, password, role) => {
     const res = await api.post('/auth/register', { name, email, password, role })
     const { token: newToken, ...userData } = res.data
-    localStorage.setItem('token', newToken)
+    sessionStorage.setItem('token', newToken)
     setToken(newToken)
     setUser(userData)
     return userData
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
+    sessionStorage.removeItem('token')
     setToken(null)
     setUser(null)
     navigate('/login')
